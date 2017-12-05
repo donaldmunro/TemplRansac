@@ -1,0 +1,48 @@
+cmake_minimum_required(VERSION 3.5)
+project(TemplRansac)
+
+set(CMAKE_CXX_STANDARD 11)
+set(USE_CUSTOM_OPENCV FALSE)
+set(CUDA_TOOLKIT_ROOT_DIR "/opt/cuda")
+set(CUSTOM_OPENCV_DIR "/opt/opencv")
+#set(OpenCV_STATIC ON)
+
+if(USE_CUSTOM_OPENCV)
+    set(OpenCV_FIND_QUIETLY false)
+    set (OpenCV_DIR "${CUSTOM_OPENCV_DIR}")
+    find_package( OpenCV
+                  HINTS "${CMAKE_PREFIX_PATH}${CUSTOM_OPENCV_DIR}")
+    if ("${OpenCV_INCLUDE_DIR}" STREQUAL "")
+        set(OpenCV_INCLUDE_DIR "${CUSTOM_OPENCV_DIR}/include/")
+    endif()
+else()
+    find_package( OpenCV)
+    set(OpenCV_INCLUDE_DIR "/usr/include/")
+endif()
+if(OpenCV_FOUND)
+   ADD_DEFINITIONS( -DOPENCV )
+   MESSAGE(STATUS "OpenCV Dir:" "${OpenCV_INSTALL_PATH}")
+   MESSAGE(STATUS "OpenCV Version:" "${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}")
+   MESSAGE(STATUS "OpenCV include directory: " "${OpenCV_INCLUDE_DIR}")
+   MESSAGE(STATUS "OpenCV libs: " "${OpenCV_LIBS}")
+else()   
+   MESSAGE(STATUS "OpenCV not found. Can't build OpenCV sample.")
+endif()
+
+IF (CMAKE_COMPILER_IS_GNUCXX)
+   MESSAGE(STATUS "GCC Detected")
+   SET(CMAKE_CXX_FLAGS "-Wall -std=c++11")
+   SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-ggdb -O2")
+   SET(CMAKE_CXX_FLAGS_RELEASE "-march=native -O2 -pipe -fstack-protector --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2")
+   #   SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g3 -ggdb")
+   SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g3 -gdwarf-4")
+   ADD_DEFINITIONS( -DISGPP )
+ENDIF()
+
+add_executable(ransacline src/sample/ransacline.cc src/Ransac.hh src/sample/LineRansac.cc src/sample/LineRansac.h src/RansacHelp.h)
+
+add_executable(ransacpnp src/sample/ransacpnp.cc src/Ransac.hh src/sample/PnPRansac.cc src/sample/PnPRansac.h src/RansacHelp.h)
+TARGET_INCLUDE_DIRECTORIES(ransacpnp PUBLIC "${OpenCV_INCLUDE_DIR}")
+TARGET_LINK_LIBRARIES(ransacpnp ${OpenCV_LIBS})
+
+
